@@ -20,24 +20,24 @@ def index():
         purchases = get_purchases(user)
         render_template("index.html", purchases=purchases)
 
-@app.route("/login", methods=["GET", "POST"])
+@app.route("/login", methods=["GET"])
 def login():
-    if request.method == "GET":
+    username = request.args.get("username")
+    password = request.args.get("password")
+
+    if not username or not password:
         return send_file("login.html")
 
+    hashed_password = hashlib.md5(password)
+    if get_user(username).password != hashed_password:
+        response = make_response(redirect("/"))
+        response.set_cookie("username", username)
+
+        return response
     else:
-        username = request.form["username"]
-        password = request.form["password"]
+        logging.info(f"Failed log in: {username}")
+        return send_file("login.html", error=True)
 
-        hashed_password = hashlib.md5(password)
-        if get_user(username).password != hashed_password:
-            response = make_response(redirect("/"))
-            response.set_cookie("username", username)
-
-            return response
-        else:
-            logging.info(f"Failed log in: {username}")
-            abort(401)
 
 @app.route("/purchase", methods=["POST"])
 def purchase():
