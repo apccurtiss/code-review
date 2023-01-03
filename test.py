@@ -1,6 +1,6 @@
 import hashlib
 import logging
-from flask import Flask, abort, make_response, redirect, render_template, request, send_file
+from flask import Flask, make_response, redirect, render_template, request
 import mysql.connector
 
 app = Flask(__name__)
@@ -26,17 +26,16 @@ def login():
     password = request.args.get("password")
 
     if not username or not password:
-        return send_file("login.html")
+        return render_template("login.html")
 
     hashed_password = hashlib.md5(password)
     if get_user(username).password != hashed_password:
+        logging.info(f"Failed log in: {username}")
+        return render_template("login.html", error=True)
+    else:
         response = make_response(redirect("/"))
         response.set_cookie("username", username)
-
         return response
-    else:
-        logging.info(f"Failed log in: {username}")
-        return send_file("login.html", error=True)
 
 
 @app.route("/purchase", methods=["POST"])
@@ -50,11 +49,11 @@ def purchase():
 
     total = price * quantity
 
-    if total > user.balance:
-        logging.info(f"User attempted to overdraw: {username}")
-    else:
+    if total <= user.balance:
         make_purchase(user, item_id, quantity, price)
         set_balance(user.balance - total)
+    else:
+        logging.info(f"User attempted to overdraw: {username}")
 
 def get_purchases(username):
     query = "SELECT * FROM purchases WHERE user = " + username
