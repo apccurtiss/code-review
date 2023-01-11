@@ -30,8 +30,10 @@ def login():
 
     hashed_password = hashlib.md5(password)
     if get_user(username).password != hashed_password:
-        logging.info(f"Failed log in: {username}")
-        return render_template("login.html", error=True)
+        logging.info("Failed log in: " + username)
+        return render_template(
+            "login.html",
+            message="<b>Login failed:</b> Invalid password for " + username)
     else:
         response = make_response(redirect("/"))
         response.set_cookie("username", username)
@@ -53,7 +55,7 @@ def purchase():
         make_purchase(user, item_id, quantity, price)
         set_balance(user.balance - total)
     else:
-        logging.info(f"User attempted to overdraw: {username}")
+        logging.info("User attempted to overdraw: " + username)
 
 def get_purchases(username):
     query = "SELECT * FROM purchases WHERE user = " + username

@@ -50,8 +50,14 @@ def login():
     # database would cause unknown users to be logged in by default. To lower the risk of an
     # accident, the conditional should be flipped.
     if get_user(username).password != hashed_password:
-        logging.info(f"Failed log in: {username}")
-        return render_template("login.html", error=True)
+        logging.info("Failed log in: " + username)
+        # [Medium] Cross-Site Scripting
+        # We do not know what happens with this `message` variable, but based on the <b> tag is is
+        # probably embedded in the HTML of the page, allowing malicious HTML to be inserted through
+        # the username.
+        return render_template(
+            "login.html",
+            message="<b>Login failed:</b> Invalid password for " + username)
     else:
         response = make_response(redirect("/"))
         # [Medium] Guessable cookies
@@ -96,7 +102,7 @@ def purchase():
         make_purchase(user, item_id, quantity, price)
         set_balance(user.balance - total)
     else:
-        logging.info(f"User attempted to overdraw: {username}")
+        logging.info("User attempted to overdraw: " + username)
 
 # [Easy] SQL injection
 # Every one of these SQL queries is vulnerable to SQL injection. Ideally they should use an ORM
